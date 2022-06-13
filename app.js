@@ -1,13 +1,17 @@
-const http = require('http');
+const express = require('express');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
-const { PORT = 3000 } = process.env;
+const { PORT = 3000, BASE_PATH } = process.env;
+
+const app = express();
+app.use(bodyParser.json());
 
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
-const server = http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end('<p>I am started up haha kek lol</p>');
-});
+app.use('/users', require('./routes/user'));
 
-server.listen(PORT);
+app.listen(PORT, () => {
+  console.log('Ссылка на сервер');
+  console.log(BASE_PATH);
+});
