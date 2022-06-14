@@ -19,7 +19,7 @@ app.use((req, res, next) => {
 app.use('/users', require('./routes/user'));
 app.use('/cards', require('./routes/card'));
 app.use('/*', (req, res) => {
-  res.send({message: 'Неверный путь'})
+  res.status(404).send({message: 'Неверный путь'})
 });
 
 app.listen(PORT, () => {
