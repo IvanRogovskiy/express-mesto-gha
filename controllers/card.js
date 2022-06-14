@@ -27,10 +27,19 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  const { id } = req.params;
-  Card.findByIdAndRemove(id)
-    .orFail(() => new Error('Карточка с указанным _id не найдена.'))
-    .catch((err) => res.status(404).send({ message: err.message }));
+  const { cardId } = req.params;
+  Card.findByIdAndRemove(cardId)
+    .orFail(() => new CardNotFound('Карточка с указанным _id не найдена.'))
+    .then(() => res.send({ message: 'Пост удален'}))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(400).send({ message: 'Переданы некорректные данные при удалении карточки' })
+      }
+      if (err instanceof CardNotFound) {
+        res.status(404).send({ message: err.message })
+      }
+      res.send(500).send({ message: err.message })
+    });
 };
 
 module.exports.likeCard = (req, res) => {

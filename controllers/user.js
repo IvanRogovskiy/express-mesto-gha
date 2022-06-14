@@ -18,10 +18,12 @@ module.exports.getUser = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof UserNotFound) {
-        res.status(404).send({ message: err.message });
-      } else {
-        res.status(500).send({ message: err.message });
+        return res.status(404).send({ message: err.message });
       }
+      if (err.name === 'CastError') {
+        return res.status(400).send({ message: ' Переданы некорректные данные пользователя' });
+      }
+      res.status(500).send({ message: err.message });
     });
 };
 
