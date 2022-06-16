@@ -9,20 +9,20 @@ module.exports.getCards = (req, res) => {
 
 module.exports.createCard = (req, res) => {
   const {
-    name, link, likes, createdAt,
+    name, link,
   } = req.body;
   const owner = req.user._id;
   Card.create({
-    name, link, likes, createdAt, owner,
+    name, link, owner,
   })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные при создании карточки.' });
+        const fields = Object.keys(err.errors);
+        res.status(400).send({ message: `Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`});
       } else {
-        res.status(500).send({ message: err.message });
+        res.status(500).send({ message: 'Внутренняя ошибка сервера' });
       }
-      res.send({ message: err });
     });
 };
 
@@ -33,12 +33,12 @@ module.exports.deleteCard = (req, res) => {
     .then(() => res.send({ message: 'Пост удален'}))
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при удалении карточки' })
+        return res.status(400).send({ message: 'Передан некорректный id карточки при удалении карточки' })
       }
       if (err instanceof CardNotFound) {
-        res.status(404).send({ message: err.message })
+        return res.status(404).send({ message: err.message })
       }
-      res.send(500).send({ message: err.message })
+      res.send(500).send({ message: 'Внутренняя ошибка сервера' })
     });
 };
 
@@ -52,12 +52,12 @@ module.exports.likeCard = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(400).send({ message: ' Переданы некорректные данные для постановки лайка' });
+        return res.status(400).send({ message: ' Переданы некорректный id карточки для постановки лайка' });
       }
       if (err instanceof CardNotFound) {
         return res.status(404).send({ message: err.message });
       }
-      res.status(500).send({ message: err });
+      res.status(500).send({ message: 'Внутренняя ошибка сервера' });
     });
 };
 
@@ -71,11 +71,11 @@ module.exports.dislikeCard = (req, res) => {
   .then((user) => res.send({ data: user }))
   .catch((err) => {
     if (err.name === 'CastError') {
-      return res.status(400).send({ message: ' Переданы некорректные данные для cнятии лайка' });
+      return res.status(400).send({ message: ' Переданы некорректный id карточки для cнятии лайка' });
     }
     if (err instanceof CardNotFound) {
       return res.status(404).send({ message: err.message });
     }
-    res.status(500).send({ message: err });
+    res.status(500).send({ message: 'Внутренняя ошибка сервера' });
   });
 };
