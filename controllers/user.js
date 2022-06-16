@@ -32,7 +32,7 @@ module.exports.createUser = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        const field = Object.keys(err.errors);
+        const fields = Object.keys(err.errors);
         res.status(400).send({ message: `Переданы некорректные данные при создании пользователя для следующих полей: ${fields.join(', ')}`});
       } else {
         res.status(500).send({ message: 'Внутренняя ошибка сервера' });
