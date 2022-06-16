@@ -54,7 +54,7 @@ module.exports.updateUserInfo = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        const field = Object.keys(err.errors)
+        const fields = Object.keys(err.errors)
         res.status(400).send({ message: `Переданы некорректные данные при обновлении пользователя для следующих полей: ${fields.join(', ')}`});
       }
       if (err.name === 'CastError') {
