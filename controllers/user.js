@@ -4,7 +4,7 @@ const User = require('../models/user');
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => res.status(500).send({ message: 'Внутренняя ошибка сервера' }));
+    .catch(() => res.status(500).send({ message: 'Внутренняя ошибка сервера' }));
 };
 
 module.exports.getUser = (req, res) => {
@@ -22,7 +22,7 @@ module.exports.getUser = (req, res) => {
       if (err.name === 'CastError') {
         return res.status(400).send({ message: 'Передан некорректный id пользователя' });
       }
-      res.status(500).send({ message: 'Внутренняя ошибка сервера' });
+      return res.status(500).send({ message: 'Внутренняя ошибка сервера' });
     });
 };
 
@@ -33,7 +33,7 @@ module.exports.createUser = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         const fields = Object.keys(err.errors);
-        res.status(400).send({ message: `Переданы некорректные данные при создании пользователя для следующих полей: ${fields.join(', ')}`});
+        res.status(400).send({ message: `Переданы некорректные данные при создании пользователя для следующих полей: ${fields.join(', ')}` });
       } else {
         res.status(500).send({ message: 'Внутренняя ошибка сервера' });
       }
@@ -42,7 +42,8 @@ module.exports.createUser = (req, res) => {
 
 module.exports.updateUserInfo = (req, res) => {
   const { name, about } = req.body;
-  User.findByIdAndUpdate(req.user._id,
+  User.findByIdAndUpdate(
+    req.user._id,
     { name, about },
     {
       new: true,
@@ -54,8 +55,8 @@ module.exports.updateUserInfo = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        const fields = Object.keys(err.errors)
-        res.status(400).send({ message: `Переданы некорректные данные при обновлении пользователя для следующих полей: ${fields.join(', ')}`});
+        const fields = Object.keys(err.errors);
+        res.status(400).send({ message: `Переданы некорректные данные при обновлении пользователя для следующих полей: ${fields.join(', ')}` });
       }
       if (err.name === 'CastError') {
         return res.status(400).send({ message: 'Некорректный id пользователя' });
@@ -63,13 +64,14 @@ module.exports.updateUserInfo = (req, res) => {
       if (err instanceof UserNotFound) {
         res.status(404).send({ message: err.message });
       }
-      res.status(500).send({ message: 'Внутренняя ошибка сервера' });
+      return res.status(500).send({ message: 'Внутренняя ошибка сервера' });
     });
 };
 
 module.exports.updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
-  User.findByIdAndUpdate(req.user._id,
+  User.findByIdAndUpdate(
+    req.user._id,
     { avatar },
     {
       new: true,
@@ -89,6 +91,6 @@ module.exports.updateUserAvatar = (req, res) => {
       if (err instanceof UserNotFound) {
         return res.status(404).send({ message: err.message });
       }
-      res.status(500).send({ message: err });
+      return res.status(500).send({ message: 'Внутренняя ошибка сервера' });
     });
 };
