@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const {login, createUser} = require('./controllers/user');
-const cookieParser = require("cookie-parser");
+const cookieParser = require('cookie-parser');
+const { login, createUser } = require('./controllers/user');
 
 const { PORT = 3000, BASE_PATH } = process.env;
 
@@ -24,6 +24,5 @@ app.use('/*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('Ссылка на сервер');
   console.log(BASE_PATH);
 });

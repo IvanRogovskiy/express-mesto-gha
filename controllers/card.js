@@ -26,13 +26,13 @@ module.exports.createCard = (req, res) => {
     });
 };
 
-module.exports.deleteCard = (req, res, next) => {
+module.exports.deleteCard = (req, res) => {
   const { cardId } = req.params;
   Card.findById(cardId).then((card) => {
     if (card.owner.toString() !== req.user._id) {
-      res.status(403).send({ message: `Нет прав для удаления карточки с id: ${cardId}` })
+      res.status(403).send({ message: `Нет прав для удаления карточки с id: ${cardId}` });
     }
-  })
+  });
   Card.findByIdAndRemove(cardId)
     .orFail(() => new CardNotFound('Карточка с указанным _id не найдена.'))
     .then(() => res.send({ message: 'Пост удален' }))

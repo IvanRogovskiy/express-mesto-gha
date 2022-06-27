@@ -1,9 +1,8 @@
-const { UserNotFound } = require('../errors/UserNotFound');
-const User = require('../models/user');
+const { NODE_ENV, JWT_SECRET } = process.env;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-const { NODE_ENV, JWT_SECRET } = process.env;
+const { UserNotFound } = require('../errors/UserNotFound');
+const User = require('../models/user');
 
 module.exports.getUsers = (req, res) => {
   User.find({})
@@ -31,10 +30,14 @@ module.exports.getUser = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  const { email, password, name, about, avatar } = req.body;
+  const {
+    email, password, name, about, avatar,
+  } = req.body;
   bcrypt.hash(password, 10)
     .then((hash) => {
-      User.create({ email, password: hash, name, about, avatar })
+      User.create({
+        email, password: hash, name, about, avatar,
+      })
         .then((user) => res.send({ data: user }))
         .catch((err) => {
           if (err.name === 'ValidationError') {
@@ -44,8 +47,7 @@ module.exports.createUser = (req, res) => {
             res.status(500).send({ message: 'Внутренняя ошибка сервера' });
           }
         });
-    })
-
+    });
 };
 
 module.exports.updateUserInfo = (req, res) => {
@@ -107,31 +109,31 @@ module.exports.getCurrentUser = (req, res) => {
   const id = req.user._id;
   User.findById(id)
     .then((user) => {
-      if(!user) {
-        throw new UserNotFound('Ошибка в получении информации о текущем пользователе')
+      if (!user) {
+        throw new UserNotFound('Ошибка в получении информации о текущем пользователе');
       }
-      res.send({ data: user })
-  })
+      res.send({ data: user });
+    })
     .catch((err) => {
       if (err instanceof UserNotFound) {
-        res.status(404).send({ message: err.message})
+        res.status(404).send({ message: err.message });
       } else {
-        res.status(500).send({ message: 'Внутренняя ошибка сервера' })
+        res.status(500).send({ message: 'Внутренняя ошибка сервера' });
       }
-    })
-}
+    });
+};
 
 module.exports.login = (req, res) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user.id}, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d'});
+      const token = jwt.sign({ _id: user.id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
       res.cookie('jwt', token, {
         httpOnly: true,
         maxAge: 3600000 * 24 * 7,
         sameSite: true,
       })
-      .send({token});
+        .send({ token });
     })
-    .catch((err) => res.status(401).send({ message: err.message }))
-}
+    .catch((err) => res.status(401).send({ message: err.message }));
+};

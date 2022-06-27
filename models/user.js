@@ -25,15 +25,14 @@ const userSchema = new mongoose.Schema({
     unique: true,
     validate: (value) => {
       if (!validator.isEmail(value)) {
-        throw new Error(`Email {${value} already exists`)
+        throw new Error(`Email {${value} already exists`);
       }
-
     },
   },
   password: {
     type: String,
     required: true,
-  }
+  },
 });
 
 userSchema.statics.findUserByCredentials = function (email, password) {
@@ -46,13 +45,11 @@ userSchema.statics.findUserByCredentials = function (email, password) {
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return new Promise.reject(new Error('Неправильные почта или пароль'))
+            return new Promise.reject(new Error('Неправильные почта или пароль'));
           }
           return user;
-        })
-    })
-}
+        });
+    });
+};
 
 module.exports = mongoose.model('user', userSchema);
-
-
