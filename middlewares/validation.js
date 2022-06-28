@@ -25,7 +25,7 @@ module.exports.validateUpdateUser = celebrate({
 
 module.exports.validateUpdateUserAvatar = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required(),
+    avatar: Joi.string().required().regex(/^https*:\/\/w{0,3}\.*[\w,\W]+/gmi),
   }),
 });
 
@@ -38,8 +38,8 @@ module.exports.validateLogin = celebrate({
 
 module.exports.validateCreateCard = celebrate({
   body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    link: Joi.string(),
+    name: Joi.string().min(2).max(30).required(),
+    link: Joi.string().regex(/^https*:\/\/w{0,3}\.*[\w,\W]+/gmi).required(),
   }),
 });
 
