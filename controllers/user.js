@@ -2,15 +2,18 @@ const { NODE_ENV, JWT_SECRET } = process.env;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { UserNotFound } = require('../errors/UserNotFound');
+const { CastError } = require('../errors/CastError');
+const { ValidationError } = require('../errors/ValidationError');
 const User = require('../models/user');
+const { UserAlreadyExists } = require('../errors/UserAlreadyExists');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => res.status(500).send({ message: 'Внутренняя ошибка сервера' }));
+    .catch((err) => next(err));
 };
 
-module.exports.getUser = (req, res) => {
+module.exports.getUser = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
@@ -19,17 +22,14 @@ module.exports.getUser = (req, res) => {
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err instanceof UserNotFound) {
-        return res.status(404).send({ message: err.message });
-      }
       if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Передан некорректный id пользователя' });
+        next(new CastError('Передан некорректный id карточки при удалении карточки'));
       }
-      return res.status(500).send({ message: 'Внутренняя ошибка сервера' });
+      next(err);
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     email, password, name, about, avatar,
   } = req.body;
@@ -42,15 +42,18 @@ module.exports.createUser = (req, res) => {
         .catch((err) => {
           if (err.name === 'ValidationError') {
             const fields = Object.keys(err.errors);
-            res.status(400).send({ message: `Переданы некорректные данные при создании пользователя для следующих полей: ${fields.join(', ')}` });
+            next(new ValidationError(`Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`));
+          }
+          if (err.code === 11000) {
+            next(new UserAlreadyExists('Пользователь с данным email уже существует'));
           } else {
-            res.status(500).send({ message: 'Внутренняя ошибка сервера' });
+            next(err);
           }
         });
     });
 };
 
-module.exports.updateUserInfo = (req, res) => {
+module.exports.updateUserInfo = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -61,24 +64,23 @@ module.exports.updateUserInfo = (req, res) => {
       upsert: false,
     },
   )
-    .orFail(() => new UserNotFound('Пользователь с заданным id не найден'))
+    .orFail(() => {
+      throw new UserNotFound('Пользователь с заданным id не найден');
+    })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         const fields = Object.keys(err.errors);
-        res.status(400).send({ message: `Переданы некорректные данные при обновлении пользователя для следующих полей: ${fields.join(', ')}` });
+        next(new ValidationError(`Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`));
       }
       if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный id пользователя' });
+        next(new CastError('Некорректный id пользователя'));
       }
-      if (err instanceof UserNotFound) {
-        res.status(404).send({ message: err.message });
-      }
-      return res.status(500).send({ message: 'Внутренняя ошибка сервера' });
+      next(err);
     });
 };
 
-module.exports.updateUserAvatar = (req, res) => {
+module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -93,19 +95,16 @@ module.exports.updateUserAvatar = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара' });
+        next(new ValidationError('Переданы некорректные данные при обновлении аватара'));
       }
       if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный id пользователя' });
+        next(new CastError('Некорректный id пользователя'));
       }
-      if (err instanceof UserNotFound) {
-        return res.status(404).send({ message: err.message });
-      }
-      return res.status(500).send({ message: 'Внутренняя ошибка сервера' });
+      next(err);
     });
 };
 
-module.exports.getCurrentUser = (req, res) => {
+module.exports.getCurrentUser = (req, res, next) => {
   const id = req.user._id;
   User.findById(id)
     .then((user) => {
@@ -115,18 +114,17 @@ module.exports.getCurrentUser = (req, res) => {
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err instanceof UserNotFound) {
-        res.status(404).send({ message: err.message });
-      } else {
-        res.status(500).send({ message: 'Внутренняя ошибка сервера' });
-      }
+      next(err);
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
+      if (!user) {
+        throw new UserNotFound('Нет пользователя с таким id');
+      }
       const token = jwt.sign({ _id: user.id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
       res.cookie('jwt', token, {
         httpOnly: true,
@@ -135,5 +133,5 @@ module.exports.login = (req, res) => {
       })
         .send({ token });
     })
-    .catch((err) => res.status(401).send({ message: err.message }));
+    .catch(next);
 };
