@@ -38,7 +38,15 @@ module.exports.createUser = (req, res, next) => {
       User.create({
         email, password: hash, name, about, avatar,
       })
-        .then((user) => res.send({ data: user }))
+        .then((user) => res.send({
+          data: {
+            name: user.name,
+            about: user.about,
+            avatar: user.avatar,
+            email: user.email,
+            _id: user._id,
+          },
+        }))
         .catch((err) => {
           if (err.name === 'ValidationError') {
             const fields = Object.keys(err.errors);
@@ -122,9 +130,6 @@ module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        throw new UserNotFound('Нет пользователя с таким id');
-      }
       const token = jwt.sign({ _id: user.id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
       res.cookie('jwt', token, {
         httpOnly: true,
