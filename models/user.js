@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
-const { ValidationError } = require('../errors/ValidationError');
 const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
 const userSchema = new mongoose.Schema({
@@ -20,21 +19,13 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
-    validate: (value) => {
-      if (!/^https*:\/\/w{0,3}\.*[\w,\W]+/gmi.test(value)) {
-        throw new ValidationError();
-      }
-    },
+    validate: (value) => /^https?:\/\/(www.)?[a-zA-Z0-9-.]+\.[a-zA-Z\w\d\S]{2,}/gmi.test(value),
   },
   email: {
     type: String,
     required: true,
     unique: true,
-    validate: (value) => {
-      if (!validator.isEmail(value)) {
-        throw new Error(`Email {${value} already exists`);
-      }
-    },
+    validate: (value) => validator.isEmail(value),
   },
   password: {
     type: String,

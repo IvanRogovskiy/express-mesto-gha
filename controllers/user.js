@@ -1,11 +1,11 @@
 const { NODE_ENV, JWT_SECRET } = process.env;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { UserNotFound } = require('../errors/UserNotFound');
 const { CastError } = require('../errors/CastError');
 const { ValidationError } = require('../errors/ValidationError');
 const User = require('../models/user');
 const { UserAlreadyExists } = require('../errors/UserAlreadyExists');
+const { NotFoundError } = require('../errors/NotFoundError');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -17,7 +17,7 @@ module.exports.getUser = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        throw new UserNotFound('Пользователь не найден');
+        throw new NotFoundError('Пользователь не найден', 'UserNotFoundError');
       }
       res.send({ data: user });
     })
@@ -25,7 +25,7 @@ module.exports.getUser = (req, res, next) => {
       if (err.name === 'CastError') {
         next(new CastError('Передан некорректный id карточки при удалении карточки'));
       }
-      next(err);
+      return next(err);
     });
 };
 
@@ -73,7 +73,7 @@ module.exports.updateUserInfo = (req, res, next) => {
     },
   )
     .orFail(() => {
-      throw new UserNotFound('Пользователь с заданным id не найден');
+      throw new NotFoundError('Пользователь с заданным id не найден', 'UserNotFound');
     })
     .then((user) => res.send({ data: user }))
     .catch((err) => {
@@ -82,7 +82,7 @@ module.exports.updateUserInfo = (req, res, next) => {
         next(new ValidationError(`Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`));
       }
       if (err.name === 'CastError') {
-        next(new CastError('Некорректный id пользователя'));
+        return next(new CastError('Некорректный id пользователя'));
       }
       next(err);
     });
@@ -99,14 +99,14 @@ module.exports.updateUserAvatar = (req, res, next) => {
       upsert: false,
     },
   )
-    .orFail(() => new UserNotFound('Пользователь с заданным id не найден'))
+    .orFail(() => new NotFoundError('Пользователь с заданным id не найден', 'UserNotFoundError'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new ValidationError('Переданы некорректные данные при обновлении аватара'));
+        return next(new ValidationError('Переданы некорректные данные при обновлении аватара'));
       }
       if (err.name === 'CastError') {
-        next(new CastError('Некорректный id пользователя'));
+        return next(new CastError('Некорректный id пользователя'));
       }
       next(err);
     });
@@ -117,7 +117,7 @@ module.exports.getCurrentUser = (req, res, next) => {
   User.findById(id)
     .then((user) => {
       if (!user) {
-        throw new UserNotFound('Ошибка в получении информации о текущем пользователе');
+        throw new NotFoundError('Ошибка в получении информации о текущем пользователе', 'UserNotFoundError');
       }
       res.send({ data: user });
     })

@@ -1,8 +1,9 @@
 const { celebrate, Joi } = require('celebrate');
+Joi.objectId = require('joi-objectid')(Joi);
 
-module.exports.validateGetUser = celebrate({
+module.exports.validateReqWithIdParam = celebrate({
   params: Joi.object().keys({
-    userId: Joi.string().alphanum().length(24),
+    id: Joi.objectId(),
   }),
 });
 
@@ -10,7 +11,7 @@ module.exports.validateCreateUser = celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().regex(/^https*:\/\/w{0,3}\.*[\w,\W]+/),
+    avatar: Joi.string().regex(/^https?:\/\/(www.)?[a-zA-Z0-9-.]+\.[a-zA-Z\w\d\S]{2,}/),
     email: Joi.string().email().required(),
     password: Joi.string().required(),
   }),
@@ -25,7 +26,7 @@ module.exports.validateUpdateUser = celebrate({
 
 module.exports.validateUpdateUserAvatar = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required().regex(/^https*:\/\/w{0,3}\.*[\w,\W]+/),
+    avatar: Joi.string().required().regex(/^https?:\/\/(www.)?[a-zA-Z0-9-.]+\.[a-zA-Z\w\d\S]{2,}/),
   }),
 });
 
@@ -39,24 +40,6 @@ module.exports.validateLogin = celebrate({
 module.exports.validateCreateCard = celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30).required(),
-    link: Joi.string().regex(/^https*:\/\/w{0,3}\.*[\w,\W]+/).required(),
-  }),
-});
-
-module.exports.validateDeleteCard = celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().alphanum().length(24),
-  }),
-});
-
-module.exports.validateLikeCard = celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().alphanum().length(24),
-  }),
-});
-
-module.exports.validateDislikeCard = celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().alphanum().length(24),
+    link: Joi.string().regex(/^https?:\/\/(www.)?[a-zA-Z0-9-.]+\.[a-zA-Z\w\d\S]{2,}/).required(),
   }),
 });
