@@ -3,7 +3,7 @@ Joi.objectId = require('joi-objectid')(Joi);
 
 module.exports.validateReqWithIdParam = celebrate({
   params: Joi.object().keys({
-    id: Joi.objectId(),
+    id: Joi.string().length(24).hex(),
   }),
 });
 
