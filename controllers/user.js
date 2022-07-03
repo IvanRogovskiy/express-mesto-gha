@@ -23,9 +23,9 @@ module.exports.getUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new CastError('Передан некорректный id карточки при удалении карточки'));
+        return next(new CastError('Передан некорректный id карточки при удалении карточки'));
       }
-      return next(err);
+      next(err);
     });
 };
 
@@ -50,7 +50,7 @@ module.exports.createUser = (req, res, next) => {
         .catch((err) => {
           if (err.name === 'ValidationError') {
             const fields = Object.keys(err.errors);
-            next(new ValidationError(`Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`));
+            return next(new ValidationError(`Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`));
           }
           if (err.code === 11000) {
             next(new UserAlreadyExists('Пользователь с данным email уже существует'));
@@ -79,7 +79,7 @@ module.exports.updateUserInfo = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         const fields = Object.keys(err.errors);
-        next(new ValidationError(`Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`));
+        return next(new ValidationError(`Переданы некорректные данные при создании карточки для следующих полей: ${fields.join(', ')}`));
       }
       if (err.name === 'CastError') {
         return next(new CastError('Некорректный id пользователя'));
